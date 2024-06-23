@@ -1,0 +1,53 @@
+```{r}
+install.packages("moments")
+library(moments)
+```
+
+Moments potrzebne do kurtozy i skośności
+
+```{r}
+calculate_statistics <- function(x) {
+  if (!is.numeric(x) || length(x) == 0) {
+    stop("Input must be a non-empty numeric vector.")
+  }
+
+  mean_val <- mean(x)
+  sd_val <- sd(x)
+  cv_val <- sd_val / mean_val
+  min_val <- min(x)
+  p10_val <- quantile(x, 0.1)
+  q1_val <- quantile(x, 0.25)
+  median_val <- median(x)
+  q3_val <- quantile(x, 0.75)
+  p90_val <- quantile(x, 0.9)
+  max_val <- max(x)
+  range_val <- max_val - min_val
+  iqr_val <- q3_val - q1_val
+  skewness_val <- skewness(x)
+  kurtosis_val <- kurtosis(x)
+
+  # Tworzenie ramki danych z wynikami
+  stats <- data.frame(
+    Statistic = c("Mean", "Standard Deviation", "Coefficient of Variation", "Minimum", "10th Percentile",
+                  "1st Quartile", "Median", "3rd Quartile", "90th Percentile", "Maximum", "Range",
+                  "Interquartile Range", "Skewness", "Kurtosis"),
+    Value = c(mean_val, sd_val, cv_val, min_val, p10_val, q1_val, median_val, q3_val, p90_val, max_val, range_val,
+              iqr_val, skewness_val, kurtosis_val)
+  )
+
+  return(stats)
+}
+```
+
+
+```{r}
+valid_vector <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+View(calculate_statistics(valid_vector))
+```
+# Failing examples:
+partially_invalid_vector <- c(1, 2, "3", 4, "s", 6, 7, 8, 9, 10)
+invalid_vector <- c("gdp", "Gini", "life expectancy")
+# View(calculate_statistics(partially_invalid_vector))
+# View(calculate_statistics(invalid_vector))
+
+

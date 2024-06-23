@@ -1,0 +1,70 @@
+---
+title: Krzywa Phillipsa
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(WDI)
+```
+
+# Analizowane dane
+
+```{r}
+indicators <- c('inflation' = 'FP.CPI.TOTL.ZG',
+                'unemployment_rate' = 'SL.UEM.TOTL.ZS')
+
+JP_data = WDI(country="JP", indicator=indicators, start=1992, end=2016)
+US_data = WDI(country="US", indicator=indicators, start=1992, end=2016)
+DE_data = WDI(country="DE", indicator=indicators, start=1992, end=2016)
+CH_data = WDI(country="CH", indicator=indicators, start=1992, end=2016)
+
+```
+
+# Japonia
+```{r}
+cor(JP_data[c('inflation', 'unemployment_rate')])
+ggplot(JP_data, aes(inflation, unemployment_rate)) +
+  geom_point() +
+  ggtitle('Japan')
+```
+
+Korelacja jak i wykres wskazuje na mocną negatywną korelację inflacji i bezrobocia, jak stanowi prawo.
+Bardzo wyraźna korelacja może wynikać z agresywnej polityki monetarnej BOJ. Wprowadzali oni m.in. ujemne stopy procentowe by stymulować inflację
+
+
+# USA
+```{r}
+cor(US_data[c('inflation', 'unemployment_rate')])
+ggplot(US_data, aes(inflation, unemployment_rate)) +
+  geom_point() +
+  ggtitle('USA')
+```
+
+Umiarkowana negatywna korelacja dla danych z USA wciąż potwierdza istnienie krzywej Phillipsa.
+
+# Niemcy
+
+```{r}
+cor(DE_data[c('inflation', 'unemployment_rate')])
+ggplot(DE_data, aes(inflation, unemployment_rate)) +
+  geom_point() +
+  ggtitle('Germany')
+```
+
+Niemcy zaprzeczają nieco tej krzywej - jednak w tym okresie są one wyjątkiem, gdyż w 1990 doszło do zjednoczenia RFN i NRD.
+
+## Szwajcaria
+
+```{r}
+cor(CH_data[c('inflation', 'unemployment_rate')])
+ggplot(CH_data, aes(inflation, unemployment_rate)) +
+  geom_point() +
+  ggtitle('Switzerland')
+```
+
+Kolejny kraj z agresywną polityką monetarną (m.in. ujemne stopy procentowe), inflacja w Szwajcarii była przez jakiś czas negatywna  od kryzysu 2008 do 2016.
+
+# Wnioski
+
+Krzywa Phillipsa ma odzwierciedlenie w danych niektórych krajów, ale nie jest ona prawem ekonomicznym.

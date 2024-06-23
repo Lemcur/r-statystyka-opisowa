@@ -1,0 +1,155 @@
+```{r include=FALSE}
+library(BatchGetSymbols)
+```
+
+---
+title: Analiza zachowania VTI i Brent OIL wokół inwazji na Ukrainę
+output: html_document
+---
+
+```{r include=FALSE}
+oil_ticker <- c('BZ=F')
+etf_ticker <- c('VTI')
+
+d_day <- as.Date("2022-02-24", format = "%Y-%m-%d")
+days_before_20 <- as.Date("2022-01-26", format = "%Y-%m-%d")
+days_after_20 <- as.Date("2022-03-24", format = "%Y-%m-%d")
+
+oil_pre.out <- BatchGetSymbols(tickers = oil_ticker, first.date = days_before_20, last.date = d_day, do.cache=FALSE)
+oil_post.out <- BatchGetSymbols(tickers = oil_ticker, first.date = d_day, last.date = days_after_20, do.cache=FALSE)
+
+oil_pre.out$df.tickers$days_away_from_event <- 20:1
+oil_post.out$df.tickers$days_away_from_event <- 1:20
+
+# dla zwrotow z dnia przed naszym oknem uzylem closing price dla dnia poprzedniego
+oil_pre.out$df.tickers$logReturns <-c(
+    round(log(oil_pre.out$df.tickers$price.close[1]) - log(88.20), digits = 4),
+    round(log(oil_pre.out$df.tickers$price.close[-1])-log(oil_pre.out$df.tickers$price.close[-nrow(oil_pre.out$df.tickers)]), digits = 4))
+oil_post.out$df.tickers$logReturns <-c(
+    round(log(oil_post.out$df.tickers$price.close[1]) - log(oil_pre.out$df.tickers$price.close[20]), digits = 4),
+    round((log(oil_post.out$df.tickers$price.close[-1])-log(oil_post.out$df.tickers$price.close[-nrow(oil_post.out$df.tickers)])), digits = 4))
+
+etf_pre.out <- BatchGetSymbols(tickers = etf_ticker, first.date = days_before_20, last.date = d_day, do.cache=FALSE)
+etf_post.out <- BatchGetSymbols(tickers = etf_ticker, first.date = d_day, last.date = days_after_20, do.cache=FALSE)
+
+etf_pre.out$df.tickers$days_away_from_event <- 20:1
+etf_post.out$df.tickers$days_away_from_event <- 1:20
+
+etf_pre.out$df.tickers$logReturns <-c(
+    round(log(etf_pre.out$df.tickers$price.close[1]) - log(219.22), digits = 4) ,
+    round(log(etf_pre.out$df.tickers$price.close[-1])-log(etf_pre.out$df.tickers$price.close[-nrow(etf_pre.out$df.tickers)]), digits = 4))
+etf_post.out$df.tickers$logReturns <-c(
+    round(log(etf_post.out$df.tickers$price.close[1]) - log(etf_pre.out$df.tickers$price.close[20]), digits = 4),
+    round(log(etf_post.out$df.tickers$price.close[-1])-log(etf_post.out$df.tickers$price.close[-nrow(etf_post.out$df.tickers)]), digits = 4))
+```
+
+Wszystkie wykresy jako kolor <span style="color:green">zielony</span> przyjmują dane sprzed kryzysu, a <span style="color:red">czerwony</span> w czasie kryzysu
+
+## Olej przed i po
+
+Olej brent: https://finance.yahoo.com/quote/BZ=F/
+
+Jako, że Rosja jest dużym eksporterem energii, w tym także ropy, a konflikt z krajem buforowym do NATO powinien spowodować ograniczoną podaż (spowodowaną sankcjami UE), co powinno podnieść ceny ropy.
+Wolumen także powinien wzrosnąć.
+
+# Wolumen
+
+```{r}
+ggplot() +
+geom_line(data=oil_pre.out$df.tickers, aes(x=days_away_from_event, y=volume), color='green') +
+geom_line(data=oil_post.out$df.tickers, aes(x=days_away_from_event, y=volume), color='red')
+```
+
+Jak widać - wolumen w dużej mierze spadł, szczególnie w pierwszych dniach, odbijając się około 5 dnia.
+
+Może to być spowodowane wzrostem ceny i niepewnością jaki będzie wynik wojny
+
+# Stopy zwrotu
+
+```{r}
+ggplot() +
+geom_line(data=oil_pre.out$df.tickers, aes(x=days_away_from_event, y=logReturns), color='green') +
+geom_line(data=oil_post.out$df.tickers, aes(x=days_away_from_event, y=logReturns), color='red')
+```
+
+Stopy zwrotu po kryzysie są widocznie wyższe od zwrotów przed kryzysem, inaczej mówiąc wyższe ceny ropy.
+
+Najprostszym tego wytłumaczeniem jest niepewność na rynku, co do wyniku wojny a także co do sankcji nałożonych na Rosję.
+
+# Srednie
+
+```{r}
+summary(oil_pre.out$df.tickers[c("volume", "logReturns")])
+summary(oil_post.out$df.tickers[c("volume", "logReturns")])
+```
+
+Liczby potwierdzają obserwacje "na oko" co do zwrotów i woluminów. Woluminy przed były większe, ale stopy zwrotu mniejsze.
+
+## VTI przed i po
+
+ETF Vanguarda Total Stock Market Infex Fund: https://finance.yahoo.com/quote/VTI/
+Kupowany częściej przez tzw. Bogleheads, ludzi inwestujących zasadami Johna Bogle'a
+
+- dywersyfikacja, którą VTI oferuje
+- niskie koszty operacyjne (raz kupujesz ETF i płacisz niskie expense ratio)
+- time in the market > timing the market
+
+Tacy klienci nie powinni zamykać pozycji podczas wojny (spadku wartości funduszu), więc wolumen nie powinien odstawać tak jak w przypadku Brent Oil
+
+# Wolumen
+
+```{r}
+ggplot() +
+geom_line(data=etf_pre.out$df.tickers, aes(x=days_away_from_event, y=volume), color='green') +
+geom_line(data=etf_post.out$df.tickers, aes(x=days_away_from_event, y=volume), color='red')
+```
+
+Wolumen w pierwszym dniu kryzysu ma najwyższą wartość - widać panikę inwestorów. Jednak nie tylko pasywni inwestorzy kupują VTI.
+Jednak biorąc pod uwagę resztę dni, istnieje nieznaczna rozbieżność wolumenów.
+
+# Stopy zwrotu
+
+```{r}
+ggplot() +
+geom_line(data=etf_pre.out$df.tickers, aes(x=days_away_from_event, y=logReturns, group = 1 ), color='green') +
+geom_line(data=etf_post.out$df.tickers, aes(x=days_away_from_event, y=logReturns, group = 1 ), color='red')
+```
+
+Stopa zwrotu VTI w dniu kryzysu jest zadziwiająco wysoka - może to być spowodowane jego kompozycją, spółkami z USA (z dala od Rosji i niedotkniętymi bezpośrednio konfliktem)
+
+# Srednie
+
+```{r}
+summary(etf_pre.out$df.tickers[c("volume", "logReturns")])
+summary(etf_post.out$df.tickers[c("volume", "logReturns")])
+```
+
+Wolumen pozostał w dużej mierze bez zmian, ale stopy zwrotu zwiększyły się po kryzysie
+
+# Zmienność woluminów w czasie kryzysu
+
+```{r include=FALSE}
+etf_last_day_before = etf_pre.out$df.tickers[20,]
+etf_first_day_after = etf_post.out$df.tickers[1,]
+etf_volume_ratio <- etf_first_day_after["volume"] / etf_last_day_before["volume"]
+
+oil_last_day_before = oil_pre.out$df.tickers[20,]
+oil_first_day_after = oil_post.out$df.tickers[1,]
+oil_volume_ratio <- oil_first_day_after["volume"] / oil_last_day_before["volume"]
+```
+
+```{r}
+etf_volume_ratio
+oil_volume_ratio
+```
+
+Jeszcze raz chciałem podkreślić drastyczne zmiany woluminów dzień przed vs dzień kryzysu.
+
+## Wnioski
+
+I wolumen i stopy zwrotu przed i po kryzysie w dużej mierze zależą od tego, jak dany kryzys wpływa na analizowane aktywo.
+
+W naszym przypadku ropa brent, jako odpowiednik surowca eksportowanego przez Rosję, i z faktu, że Rosja eksportuje także Natural Gas, spowodował niepewność wśród inwestorów, powodując spadek woluminu. Kryzys ten przyczynił się jednak do zwiększenia ceny.
+
+VTI jest ciekawym przypadkiem, bo wzrósł i wolumen i stopy zwrotu, jednak to z uwagi na to jakie potencjalne skutki niesie ten konflikt dla USA (brak bezpośredniego zagrożenia).
+
